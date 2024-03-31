@@ -29,26 +29,23 @@ I would like to thank my M.A.I supervisor Dr. Justin King, whose previous work w
 
 Relevant academic references are included in the M.A.I dissertation (see Trinity College Dublin Library, <https://www.tcd.ie/library/>).
 
-Gnucap is provided under the GNU GPLv3, which is also the license that this project code is provided under. See ```LICENSE``` file.
+**Gnucap**
+
+Gnucap is the creation of Albert Davis and is developed by him and others. It is provided under
+the GNU GPLv3, which is also the license that this project code is provided under.
+
+See https://www.gnu.org/licenses/gpl-3.0.html. For the GNU GPLv3 license.
+
+Additionally, see the Gnucap repository here https://savannah.gnu.org/projects/gnucap/.
 
 **LAPACK**
------------
-The relevant licensing files are found within ```lapack-3.12.0.tar.gz``` as appropriate.
 
-**THE FOLLOWING COPYRIGHTS APPLY TO LAPACK:**
+LAPACK is a co-creation of The University of Tennessee and The University of Tennessee
+Research Foundation, The University of California Berkeley, and The University of Colorado
+Denver.
 
-Copyright (c) 1992-2013 The University of Tennessee and The University
-                        of Tennessee Research Foundation.  All rights
-                        reserved.
-                        
-Copyright (c) 2000-2013 The University of California Berkeley. All
-                        rights reserved.
-                        
-Copyright (c) 2006-2013 The University of Colorado Denver.  All rights
-                        reserved.
+See the user guide here https://netlib.org/lapack/.
 
-**THE FOLLOWING COPYRIGHTS APPLY TO THE LAPACKE C BINDINGS:**
-                        
-Copyright (c) 2012, Intel Corp. All rights reserved.
+The LAPACKE C bindings are the creation of Intel Corp.
 
-**THESE COPYRIGHTS DO NOT APPLY TO THIS PROJECT OR THE PROJECT WORK THEREIN, BUT ARE REQUIRED TO BE REFERENCED WITH ANY DISTRIBUTION OF THE LAPACK LIBRARY.**
+The relevant licensing files are found within the source code provided.
