@@ -25,11 +25,11 @@ Building LAPACK is more involved, but instructions are also given in the downloa
 Compiling ```rc_model.cc``` ...
 
 ## Licenses & Acknowledgements
-I would like to thank my M.A.I supervisor Dr. Justin King, whose previous work was the basis for this project. He provided invaluable insights and guidance which made the project both possible and an enjoyable experience.
+I would like to thank my M.A.I supervisor Dr. Justin King, whose previous work was the basis for this project. He provided invaluable insights and guidance which made the project both possible and an enjoyable experience, instilling curiosity at each discussion.
 
 Relevant academic references are included in the M.A.I dissertation (see Trinity College Dublin Library, <https://www.tcd.ie/library/>).
 
-Gnucap is provided under the GNU GPLv3, which is also the license that this project is provided under. See ```LICENSE```file.
+Gnucap is provided under the GNU GPLv3, which is also the license that this project code is provided under. See ```LICENSE```file.
 
 LAPACK:
 
