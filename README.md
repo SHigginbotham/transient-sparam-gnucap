@@ -31,7 +31,11 @@ Relevant academic references are included in the M.A.I dissertation (see Trinity
 
 Gnucap is provided under the GNU GPLv3, which is also the license that this project code is provided under. See ```LICENSE``` file.
 
-LAPACK:
+**LAPACK**
+-----------
+The relevant licensing files are found within ```lapack-3.12.0.tar.gz``` as appropriate.
+
+**THE FOLLOWING COPYRIGHTS APPLY TO LAPACK:**
 
 Copyright (c) 1992-2013 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
@@ -42,7 +46,7 @@ Copyright (c) 2000-2013 The University of California Berkeley. All
                         
 Copyright (c) 2006-2013 The University of Colorado Denver.  All rights
                         reserved.
-                        
-The LAPACKE C bindings is Copyright (c) 2012, Intel Corp. All rights reserved.
 
-The relevant licensing files are found within ```lapack-3.12.0.tar.gz``` as appropriate.
+**THE FOLLOWING COPYRIGHTS APPLY TO THE LAPACKE C BINDINGS:**
+                        
+Copyright (c) 2012, Intel Corp. All rights reserved.
