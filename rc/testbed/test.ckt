@@ -1,0 +1,12 @@
+# SIMPLE TEST FOR RC_MODEL; RUN FROM COMMAND LINE USING 'gnucap -b test.ckt'
+.load rc.so
+.gen freq=2
+.gen amplitude=1
+Vs 1 0 generator(1)
+Rs 1 2 50
+p1 2 0 50
+.options dtmin 0.1e-3
+.options dtratio 1
+.print tr v(p1) i(p1) dt(p1)
+.tr 0 5 0.1e-3 trace all > sim_out.txt
+.end
