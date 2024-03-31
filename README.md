@@ -29,7 +29,7 @@ I would like to thank my M.A.I supervisor Dr. Justin King, whose previous work w
 
 Relevant academic references are included in the M.A.I dissertation (see Trinity College Dublin Library, <https://www.tcd.ie/library/>).
 
-Gnucap is provided under the GNU GPLv3, which is also the license that this project code is provided under. See ```LICENSE```file.
+Gnucap is provided under the GNU GPLv3, which is also the license that this project code is provided under. See ```LICENSE``` file.
 
 LAPACK:
 
