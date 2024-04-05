@@ -4,7 +4,7 @@
     AND ALLOW TRANSIENT SIMULATION OF 1-PORT, LTI S-PARAMETER BLOCKS
 
     THIS IS THE VECTOR FITTING ALGORITHM HEADER FILE
-    IT EMPLOYS THE LAPACKE LINEAR ALGEBRA LIBRARY
+    IT EMPLOYS THE LAPACK LINEAR ALGEBRA LIBRARY
 
     Created by:     Sean Higginbotham for M.A.I project
                     Supervisor: Dr. Justin King
@@ -313,6 +313,7 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
 
 
         // VARIABLE ARRAY DECLARATIONS
+        // note they're defined as just 1D array so that we don't need to use pointers to pointers
         // ---------------------------
 
         std::complex<double> *a_matrix =        new std::complex<double>[a_matrix_r * a_matrix_c];
@@ -564,7 +565,7 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
                 
                 bz_real[k*bz_real_c + 0] = 1;                       // column vector of 1s
 
-                c_real[0*c_real_c + k] = b_matrix[(num_rp + 2 * num_cp + 1 + k)*b_matrix_c + 0];    // sigma residues
+                c_real[0*c_real_c + k] = b_matrix[(num_rp + 2 * num_cp + 1 + k)*b_matrix_c + 0];    // column vector of sigma residues
                 // check for issues
                 if (std::isnan(c_real[k]) || std::isinf(c_real[k]))
                 {

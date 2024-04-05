@@ -44,13 +44,14 @@ namespace {
         private:
             PARAMETER<int> nump;        // # initial poles to use in VF
             PARAMETER<int> numi;        // # iterations to use in VF
-            PARAMETER<bool> vflog;      // flag for if want to print logs during the VF
-            PARAMETER<bool> rclog;      // flag for if want to print logs during the transient sims
+            PARAMETER<bool> vflog;      // flag for if want to print logs during the VF (logs are put into 'vf_log.txt', and VF results are put into 'results.txt', and each pole iteration is put into 'pole_guess.txt'')
+            PARAMETER<bool> rclog;      // flag for if want to print logs during the transient sims (logs are put into 'tr_write.txt')
         protected:
             explicit RC_MODEL(const RC_MODEL& p) : STORAGE(p) {}         // copy constructor
         public:
             explicit RC_MODEL() : STORAGE() {}                           // constructor
 
+            // parameter function overrides
             int param_count() const             {return (4 + STORAGE::param_count());}  // # params for this device
             bool param_is_printable(int) const;
             std::string param_name(int) const;
@@ -67,7 +68,7 @@ namespace {
             int net_nodes() const               {return 2;}
             bool has_iv_probe() const           {return 2;}
 
-            // device will be passive cause in my case we're only considering
+            // device will be passive cause in this case we're only considering
             // linear, passive (R,L,C) elements in the S-param block
 
             void tr_iwant_matrix()              {tr_iwant_matrix_passive();}
@@ -79,7 +80,7 @@ namespace {
             double tr_involts_limited() const   {return tr_outvolts_limited();}
             COMPLEX ac_involts() const           {return ac_outvolts();}
 
-            // functions will ovverride:
+            // functions which explicitly implement the RC companion model
             bool do_tr();
             void tr_advance();      // update i_c[n] here using _time, _dt, etc...
             void tr_begin();        // for initialisations
@@ -100,7 +101,7 @@ namespace {
 
             CARD* clone() const                 {return new RC_MODEL(*this);}
 
-            // DATA FROM VF ALGORITHM
+            // FOR STORING DATA FROM VF ALGORITHM
 
             std::vector<std::complex<double>> vf_poles;
             std::vector<std::complex<double>> vf_residues;
@@ -120,26 +121,24 @@ namespace {
 
             // RC MODEL RELATED PARAMS
 
-            double Zref = 50;                               // Impedance the block is referenced to (Note this is NOT the characteristic impedance of the TLs)
+            double Zref = 50;                               // Impedance the block is referenced to (Note this is NOT the characteristic impedance of the port TLs)
             double Gc;                                      // parallel conductance of the RC model
             double i_c;                                     // independent current source of the RC model
-            bool has_entered_advance;   // for handling first iteration where tr_advance() is not entered (prob is redundant now!)
             double factor;                                  // the (K + 2 * real(sum(rk * lambdak))) term that is repeated in the RC constitutive relations (in Gc and i_c)
             double h_n;                                     // history term ( is actually 2*real(h[n]), where h[n] == hist_sum )
-            std::vector<std::complex<double>> dk_store;     // values of the dk[n-1] history terms
+            std::vector<std::complex<double>> dk_store;     // values of the dk[n-1] history terms (must store as vector since will have an entry for each pole)
             double a_store[2] = {0, 0};                     // for storing a[n-1] and a[n-2]
             double a_n;                                     // value of incident wave a[n] at current time step;
             std::vector<std::complex<double>> dk_n;         // value of history term dk[n] at current time step
 
             std::vector<std::complex<double>> alpha_k, lambda_k, mu_k, nu_k;    // coeficients for 2nd order approx (for time steps > 2)
             std::vector<std::complex<double>> lambda_k_1, mu_k_1;               // 1st order approx (for time steps 1 and 2)
-            std::vector<std::complex<double>> res_lambda;                       // vector of r * lambda values at each iteration (don't actually need...)
             std::complex<double> res_lambda_sum;                                // dot product of residues and 2nd order lambda
             std::complex<double> res_lambda1_sum;                               // dot product of residues and 1st order lambda
             std::complex<double> hist_sum;                                      // dot product of residues with dk_store and a_store (i.e., the h[n] history term)
 
-            std::ofstream tr_data;  // debugging file
-            bool accepted;          // to prevent tr_accept pushing history terms TWICE in a given time step (which messes up the model)
+            std::ofstream tr_data;  // debugging file for RC model
+            bool accepted;          // to prevent tr_accept pushing history terms TWICE in a given time step (which messes up the model, obviously!)
 
             int time_step;          // current time step (indexed from 0, so time_step = 0 means the 1st time step of the transient run)
     };
@@ -209,27 +208,27 @@ namespace {
         }
     }
 
-    // ======================
-    // = OVVERIDE FUNCTIONS =
-    // ======================
+    // ===================================
+    // = OVVERIDE FUNCTIONS FOR RC MODEL =
+    // ===================================
 
-    // run when performing any command on the device
+    // is run when performing any command on the device
     void RC_MODEL::precalc_first()
     {
         STORAGE::precalc_first();                       // won't work if don't call base class version first!
         
-        // evaluate values of parameters
+        // we must first evaluate values of parameters provided with the instance, as otherwise they'd stay as defaults
         num_p = nump.e_val(nump_default, scope());
         num_i = numi.e_val(numi_default, scope());
         vf_log = vflog.e_val(vflog_default, scope());
         rc_log = rclog.e_val(rclog_default, scope());
 
-        // having vector fitting in here prevents issues during transient sims
+        // having vector fitting in here seems to prevent issues (i.e., incorrect computatations) during transient sims
         // probably means that the model (device in circuit) needs to be replaced if we change the input s_param_data.txt
         assert(do_vector_fitting(vf_poles, vf_residues, vf_remainder, num_p, num_i, vf_log));
     }
 
-    // initialise relevant values and set up
+    // initialise relevant values and set up; is run once at beginning of transient sim
     void RC_MODEL::tr_begin()
     {
 
@@ -237,7 +236,7 @@ namespace {
 
         // open log file for debugging
         try { std::filesystem::remove("tr_write.txt"); } catch(...) {}
-        tr_data.open("tr_write.txt", std::ios::app | std::ios::out);
+        if (rc_log && !tr_data) tr_data.open("tr_write.txt", std::ios::app | std::ios::out);
         if (tr_data) tr_data << "Opening file in tr_begin()...\n";
 
         // ======================
@@ -246,7 +245,6 @@ namespace {
 
         Zref = value();
         i_c = 0;
-        has_entered_advance = 0;        // prob dont need...
         time_step = 0;
         accepted = 0;   // for some reason tr_accept() is entered twice, but wanna prevent this!
 
@@ -270,18 +268,17 @@ namespace {
     // (except for the first time step which is done in do_tr())
     void RC_MODEL::tr_advance()
     {
-        // has_entered_advance = 1;
-        // if (!tr_data && rc_log) ("tr_write.txt", std::ios::app | std::ios::out); // re-open for this time step
+        // we close tr_data at the end of each time step, so re-open again if needed.
+        if (rc_log && !tr_data) tr_data.open("tr_write.txt", std::ios::app | std::ios::out);
         if (tr_data) tr_data << "Entered tr_advance()...\n";
         time_step++;
         STORAGE::tr_advance();
 
         // clear vectors and things for this iteration
         alpha_k.clear(); lambda_k.clear(); mu_k.clear(); nu_k.clear();
-        if (!has_entered_advance) {lambda_k_1.clear(); mu_k_1.clear();} // 2nd time step (time_step == 1)
-        res_lambda.clear();
+        if (time_step == 1) {lambda_k_1.clear(); mu_k_1.clear();} // 2nd time step (time_step == 1)
         res_lambda_sum = 0. * one;  // set to 0
-        if (!has_entered_advance) res_lambda1_sum = 0. * one;
+        if (time_step == 1) res_lambda1_sum = 0. * one;
         hist_sum = 0. * one;    // set to 0
 
         // make sure VF solution is actually usable!
@@ -296,7 +293,7 @@ namespace {
             
             std::complex<double>lambda_1, mu_1;
             std::complex<double> alpha = std::exp(x * _dt);
-            if (!has_entered_advance)
+            if (time_step == 1)
             {
                 lambda_1 = - (one / x) * ( one + (one - alpha) / (x * _dt) );
                 mu_1 = - (one / x) * ( (alpha - one) / (x * _dt) - alpha );
@@ -307,11 +304,10 @@ namespace {
 
             res_lambda_sum += r * lambda;
             res_lambda1_sum += r * lambda_1;
-            // if (!has_entered_advance)
 
 
-            
-            if (!has_entered_advance)
+            // write out log data
+            if (time_step == 1)
             {
                 tr_data << "\np[" << i+1 << "] = " << x;
                 tr_data << "\nr[" << i+1 << "] =" << r;
@@ -334,16 +330,16 @@ namespace {
                 hist_sum += (r * (alpha * dk_store[i] + mu * a_store[0] + nu * a_store[1]) );
                 if (tr_data) tr_data << hist_sum << "\n";
             }
-            res_lambda.push_back(r * lambda);   // don't actually use this vector so can get rid of!
             alpha_k.push_back(alpha);
             lambda_k.push_back(lambda);
-            if (!has_entered_advance) {lambda_k_1.push_back(lambda_1); mu_k_1.push_back(mu_1);}
+            if (time_step == 1) {lambda_k_1.push_back(lambda_1); mu_k_1.push_back(mu_1);}
             mu_k.push_back(mu);
             nu_k.push_back(nu);
         }
 
+        // ensure we don't end up dividing by 0
         assert(res_lambda_sum.real() != 0);
-        if (!has_entered_advance) assert(res_lambda1_sum.real() != 0);
+        if (time_step == 1) assert(res_lambda1_sum.real() != 0);
         assert(vf_remainder != 0);
 
         factor = (vf_remainder + 2 * (res_lambda_sum.real()));
@@ -356,11 +352,11 @@ namespace {
         h_n = (2 * (hist_sum.real()));
 
         // calculate i_c term
-        if (!has_entered_advance) _i[0].f1 = 2 / (std::sqrt(Zref) * (1. + factor_1));
+        if (time_step == 1) _i[0].f1 = 2 / (std::sqrt(Zref) * (1. + factor_1));
         else _i[0].f1 = 2 / (std::sqrt(Zref) * (1. + factor));
         _i[0].x = h_n;
         i_c = _i[0].f1 * _i[0].x;
-        if (tr_data && !has_entered_advance)
+        if (tr_data && time_step == 1)
         {
             tr_data << "Time step " << time_step + 1 << '\n';
             tr_data << "\tfactor = " << factor_1 << "\n\tGc = " << Gc << "\n\th_n = " << h_n << "\n\ti_c = " << i_c << '\n'; 
@@ -371,29 +367,25 @@ namespace {
             tr_data << "\tfactor = " << factor << "\n\tGc = " << Gc << "\n\th_n = " << h_n << "\n\ti_c = " << i_c << '\n'; 
         }
 
-        if (!has_entered_advance) has_entered_advance = 1;
         if (tr_data) tr_data << "Exiting tr_advance()...\n";
     }
 
     // do_tr is repeated multiple times till reach satisfied convergence in MNA solver
     bool RC_MODEL::do_tr()
     {
-        // don't need to use tr_eval(), it is just a boilerplate function
-        // that we can use as a push-button soln if our model fits it well.
 
         if (tr_data) tr_data << "Entering do_tr()....\n";
         accepted = 0;       // reset for this time step
 
         assert(_y[0] == _y[0]);
 
-        // for the first time step, tr_advance() is not entered, so need to do it here
-        if (!has_entered_advance)   // first time step (time_step == 0)
+        // for the first time step, tr_advance() is not entered, so need to do the updating here
+        if (time_step == 0)   // first time step (time_step == 0)
         {
             double delta = 0.1e-3;    // assign some arbitrary initial time step of 100ns since initial time step can't be accessed on first step?
 
-            // clear vectors and things for this iteration (note all these will be filled with 1st order stuff as appropriate so no need to discern)
+            // clear vectors and things for this iteration (note all these will be filled with 1st order stuff as appropriate so no need to discern like in tr_advance())
             alpha_k.clear(); lambda_k.clear(); mu_k.clear(); nu_k.clear();
-            res_lambda.clear();
             res_lambda_sum = 0. * one;  // set to 0
             hist_sum = 0. * one;        // set to 0
 
@@ -413,7 +405,6 @@ namespace {
     
                 hist_sum += 0.;
                 
-                res_lambda.push_back(r * lambda);   // don't actually use this vector so can get rid of!
                 alpha_k.push_back(alpha);
                 lambda_k.push_back(lambda);
             }
@@ -429,7 +420,7 @@ namespace {
             // calculate h[n] term; will be 0 on first time step regardless
             h_n = 0.;
 
-            // i_c term is also hence zero on first time step so no need to update default value
+            // i_c term is also hence zero on first time step so no need to update from default value
 
             if (tr_data)
             {
@@ -456,7 +447,7 @@ namespace {
         return converged();
     }
 
-    // here is where we calculate the terms that make up the history term
+    // here is where we calculate the terms that make up the history term and then propagate to next time step
     void RC_MODEL::tr_accept()
     {
         if (!accepted)
@@ -529,9 +520,9 @@ namespace {
             a_store[0] = a_n;               // a[n]    ----->  a[n-1]
 
             if (tr_data) tr_data << "Exiting tr_accept()...\n";
-            // if (tr_data) tr_data.close();
         }
         accepted = 1;
+        if (tr_data) tr_data.close();
     }
 
     RC_MODEL p1;
