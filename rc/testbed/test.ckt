@@ -4,7 +4,7 @@
 .gen amplitude=1
 Vs 1 0 generator(1)
 Rs 1 2 50
-p1 2 0 50
+p1 2 0 50 rclog=1 vflog=1
 .options dtmin 0.1e-3
 .options dtratio 1
 .print tr v(p1) i(p1) dt(p1)
