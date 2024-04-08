@@ -1,4 +1,4 @@
-!data (freqs in Hz, real and imag part of S11(jw))
+! RLC circuit Z11(jw) (freqs in Hz, real and imag part of S11(jw))
 0	0	0
 0.0159	0.043308792	0.203551321
 0.0318	0.21691974	0.412147505

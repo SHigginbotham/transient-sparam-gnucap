@@ -1,4 +1,4 @@
-! Created Wed Mar 13 13:02:46 2024 1 Port Network Data from SP1.SP block (frequencies are in Hz)
+! Butterworth LPF S11(jw) (frequencies are in Hz)
 0                 0                  0
 10000000                 0     9.96560534e-27
 20000000                 0     8.07948152e-23
