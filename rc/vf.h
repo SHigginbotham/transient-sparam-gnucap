@@ -199,6 +199,16 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
 
     // PERFORM ITERATIONS TO OBTAIN OPTIMUM FIT
 
+    if (vflog)
+    {
+        try { std::filesystem::remove("residual_log.txt"); }
+        catch(...) {}
+    }
+    std::ofstream resid_log;
+    if (vflog) resid_log.open("residual_log.txt", std::ios::app | std::ios::out);
+    // std::time_t in_time = std::chrono::system_clock::to_time_t(start);
+    if (resid_log) resid_log << "Output of VF residuals over iterations;\t[iteration, #rows A_real, #cols A_real, rank, residual]\n";
+
     for (int iteration = 0; iteration <= iters; iteration++)
     {
         // here we use our poles guess, the read-in S-param data, and the frequencies they occur at
@@ -520,6 +530,7 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
         // this function (dgelss) solves a linear system where system matrix (A) may be rank deficient
         // solution matrix will have #rows = #cols of A and #cols = #cols of B, and be stored in 'b_matrix'
         // residual of the solution is the sum of squares of the n + 1 : m elements in b_matrix
+        // but this is supposedly only 'valid' if m_soln > n_soln && rank == n_soln
         info_soln = LAPACKE_dgelss(LAPACK_ROW_MAJOR, m_soln, n_soln, nrhs_soln, a_matrix_real, lda_soln, b_matrix, ldb_soln, singval, -1, &rank);
         
         if (info_soln != 0)
@@ -530,17 +541,19 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
             return 0;
         }
 
-        // THIS GIVES RESIDUALS, CAN USE FOR COMPARING TO ACTUAL DATA IF DESIRED
-        // for (int j = a_matrix_real_c; j < a_matrix_real_r; j++)
+        // THIS GIVES (SUM OF SQUARES) RESIDUALS OF THE VF SYSTEM, CAN USE FOR COMPARING TO ACTUAL DATA IF DESIRED
+        // if (m_soln > n_soln && rank == n_soln)
         // {
-        //     for (int k = 0; k < b_matrix_c; k++)
-        //     {
-        //         // std::cout << b_matrix[j * b_matrix_c + k] << "\t";
-        //         residual += std::pow(b_matrix[j * b_matrix_c + k], 2);
-        //     }
-        //     // std::cout << '\n';
+            for (int j = a_matrix_real_c; j < a_matrix_real_r; j++)
+            {
+                for (int k = 0; k < b_matrix_c; k++)
+                {
+                    residual += std::pow(b_matrix[j * b_matrix_c + k], 2);
+                }
+            }
+            // if (resid_log) resid_log << iteration << ", " << m_soln << ", " << n_soln << ", " << rank << ',' << residual << '\n';
         // }
-        // std::cout << residual << '\n';
+        /*else */if (resid_log) resid_log << iteration << ", " << m_soln << ", " << n_soln << ", " << rank << ',' << residual << '\n';
 
         // (v) EXTRACT ZEROES FROM RESIDUES OF THE SIGMA FUNCTION
 
@@ -830,6 +843,7 @@ bool do_vector_fitting(std::vector<std::complex<double>>& p, std::vector<std::co
     if (results_write) results_write.close();
     if (pole_write) pole_write.close();
     if (log_file) log_file.close();
+    if (resid_log) resid_log.close();
 
     // (viii) return fit to RC model via pass by reference and exit VF
     p = poles_guess;
