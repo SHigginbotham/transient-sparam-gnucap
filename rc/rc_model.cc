@@ -45,7 +45,7 @@ namespace
   private:
     PARAMETER<int> nump;   // # initial poles to use in VF
     PARAMETER<int> numi;   // # iterations to use in VF
-    PARAMETER<bool> vflog; // flag for if want to print logs during the VF (logs are put into 'vf_log.txt', and VF results are put into 'results.txt', and each pole iteration is put into 'pole_guess.txt'')
+    PARAMETER<bool> vflog; // flag for if want to print logs during the VF (logs are put into 'vf_log.txt', and VF results are put into 'results.txt', and each pole iteration is put into 'pole_guess.txt', error info is put into  'residual_log.txt')
     PARAMETER<bool> rclog; // flag for if want to print logs during the transient sims (logs are put into 'tr_write.txt')
   protected:
     explicit RC_MODEL(const RC_MODEL &p) : STORAGE(p) {} // copy constructor
