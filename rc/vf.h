@@ -207,10 +207,11 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
     pole_write << '\n';
   }
 
-  std::vector<std::complex<double>> real_poles;  // real poles
-  std::vector<std::complex<double>> comp_poles;  // complex poles
-  std::vector<std::complex<double>> all_zeroes;  // zeroes computed from sigma function residues
-  std::vector<std::complex<double>> keep_zeroes; // zeroes computed from sigma function residues that are used for next pole iteration
+  std::vector<std::complex<double>> real_poles;                          // real poles
+  std::vector<std::complex<double>> comp_poles;                          // complex poles
+  std::vector<std::complex<double>> all_zeroes;                          // zeroes computed from sigma function residues
+  std::vector<std::complex<double>> keep_zeroes;                         // zeroes computed from sigma function residues that are used for next pole iteration
+  std::vector<std::complex<double>> all_zeroes_prev(num_poles * 2, 0.0); // for storing sigma zeroes (== poles) of previous iteration
 
   double remainder;                           // remainder of the VF fit
   std::vector<std::complex<double>> residues; // residues of the VF fit
@@ -236,7 +237,7 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
     resid_log.open("residual_log.txt", std::ios::app | std::ios::out);
   // std::time_t in_time = std::chrono::system_clock::to_time_t(start);
   if (resid_log)
-    resid_log << "Output of VF residuals over iterations;\t[iteration, #rows A_real, #cols A_real, rank, residual]\n";
+    resid_log << "Output of VF residuals over iterations;\t[iteration, #rows A_real, #cols A_real, rank, VF residual, max pole diff]\n";
 
   for (int iteration = 0; iteration <= iters; iteration++)
   {
@@ -590,7 +591,7 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
     // this function (dgelss) solves a linear system where system matrix (A) may be rank deficient
     // solution matrix will have #rows = #cols of A and #cols = #cols of B, and be stored in 'b_matrix'
     // residual of the solution is the sum of squares of the n + 1 : m elements in b_matrix
-    // but this is supposedly only 'valid' if m_soln > n_soln && rank == n_soln
+    // but this is supposedly only 'valid' if m_soln > n_soln && rank == n_soln...? We output the residual but it is best not to draw conclusions from it as of now....
     info_soln = LAPACKE_dgelss(LAPACK_ROW_MAJOR, m_soln, n_soln, nrhs_soln, a_matrix_real, lda_soln, b_matrix, ldb_soln, singval, -1, &rank);
 
     if (info_soln != 0)
@@ -604,7 +605,7 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
       return 0;
     }
 
-    // THIS GIVES (SUM OF SQUARES) RESIDUALS OF THE VF SYSTEM, CAN USE FOR COMPARING TO ACTUAL DATA IF DESIRED
+    // THIS GIVES (SUM OF SQUARES) RESIDUALS OF THE VF SYSTEM, CAN USE FOR COMPARING TO ACTUAL DATA IF DESIRED (though its validity is dubious!)
     // if (m_soln > n_soln && rank == n_soln)
     // {
     for (int j = a_matrix_real_c; j < a_matrix_real_r; j++)
@@ -617,7 +618,7 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
     // if (resid_log) resid_log << iteration << ", " << m_soln << ", " << n_soln << ", " << rank << ',' << residual << '\n';
     // }
     /*else */ if (resid_log)
-      resid_log << iteration << ", " << m_soln << ", " << n_soln << ", " << rank << ',' << residual << '\n';
+      resid_log << iteration << ", " << m_soln << ", " << n_soln << ", " << rank << ", " << residual << ", ";
 
     // (v) EXTRACT ZEROES FROM RESIDUES OF THE SIGMA FUNCTION
 
@@ -729,6 +730,21 @@ bool do_vector_fitting(std::vector<std::complex<double>> &p, std::vector<std::co
         std::complex<double> temp(comp_zeroes_real[k], comp_zeroes_imag[k]);
         all_zeroes.push_back(temp);
       }
+
+      // compute max magnitude difference in pole guess
+      double max_diff = -1;
+      if (all_zeroes.size() == all_zeroes_prev.size()) // we expect the size to remain constant throughout the alg, but just in case...
+      {
+        for (int j = 0; j < all_zeroes.size(); j++)
+        {
+          double mag_diff = std::abs(all_zeroes[j] - all_zeroes_prev[j]);
+          if (mag_diff > max_diff)
+            max_diff = mag_diff;
+        }
+      }
+      all_zeroes_prev = all_zeroes;
+      if (resid_log)
+        resid_log << max_diff << '\n';
 
       // only keep zeroes with positive imag part (one of the complex conj pairs) in 'keep zeroes', and also filter out those with very small magnitudes (meaning they don't contribute to the fit)
       for (auto x : all_zeroes)
