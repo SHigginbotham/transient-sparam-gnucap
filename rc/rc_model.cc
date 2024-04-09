@@ -7,6 +7,22 @@
               Supervisor: Dr. Justin King
               Department of Electronic and Electrical Engineering,
               Trinity College Dublin, Ireland, September 2023 - April 2024
+              
+  Copyright (C) 2024 Sean Higginbotham
+  Author: Sean Higginbotham <higginbs@tcd.ie>
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // for RC model
@@ -45,7 +61,7 @@ namespace
   private:
     PARAMETER<int> nump;   // # initial poles to use in VF
     PARAMETER<int> numi;   // # iterations to use in VF
-    PARAMETER<bool> vflog; // flag for if want to print logs during the VF (logs are put into 'vf_log.txt', and VF results are put into 'results.txt', and each pole iteration is put into 'pole_guess.txt', error info is put into  'residual_log.txt')
+    PARAMETER<bool> vflog; // flag for if want to print logs during the VF (logs are put into 'vf_log.txt', and VF results are put into 'results.txt', and each pole iteration is put into 'pole_guess.txt'')
     PARAMETER<bool> rclog; // flag for if want to print logs during the transient sims (logs are put into 'tr_write.txt')
   protected:
     explicit RC_MODEL(const RC_MODEL &p) : STORAGE(p) {} // copy constructor
