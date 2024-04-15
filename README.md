@@ -33,7 +33,7 @@ To compile the Gnucap plugin, run the following in the directory where  ```vf.h`
 ```
 g++ -shared -fPIC rc_model.cc ~/code/lapack-3.12.0/liblapack.so ~/code/lapack-3.12.0/libtmglib.so ~/code/lapack-3.12.0/liblapacke.so ~/code/lapack-3.12.0/librefblas.so ~/code/lapack-3.12.0/libcblas.so -o rc.so -I~/code/lapack-3.12.0/LAPACKE/include -I~/code/lapack-3.12.0/CBLAS/include -I/usr/local/include/gnucap -L~/code/lapack-3.12.0 -L/usr/local/lib/ -l lapack -l lapacke -l gfortran -lcblas -l tmglib -l refblas
 ```
-The final result is a file, ```rc.so```, which is linked into Gnucap by typing ```load rc.so``` inside a Gnucap runtime. Note that ```rc.so``` shoould ideally be placed somewhere that is searched by the ```LD_LIBRARY_PATH``` environment variable.
+The final result is a file, ```rc.so```, which is linked into Gnucap by typing ```load rc.so``` inside a Gnucap runtime. Note that ```rc.so``` should ideally be placed somewhere that is searched by the ```LD_LIBRARY_PATH``` environment variable.
 
 ## Licenses & Acknowledgements
 
