@@ -19,15 +19,23 @@ Instructions for building Gnucap are included in the downloaded source from its 
 make install
 ```
 Building LAPACK is more involved, but instructions are also given in the downloaded source. It will need to be compiled into ```.so``` dynamic library files for the compilation of ```rc_model.cc``` to work.
+For simplicity, a ```make.inc``` file is provided in this repository, which should contain the required changes to compile LAPACK properly. Place this file into the ```.../lapack-3.12.0/``` top directory, and then run the following commands from this same directory.
+```
+make
+cd LAPACKE
+make
+cd ../CBLAS
+make
+```
+After all the compiling is done, there should be five dynamic library files in the top directory: ```libcblas.so```, ```liblapack.so```, ```libtmglib.so```, ```liblapacke.so```, and ```librefblas.so```.
 
-...
-
-Compiling ```rc_model.cc``` ...
+To compile the Gnucap plugin, run the following in the directory where  ```vf.h``` and  ```rc_model.cc``` are located. It's assumed that LAPACK is installed in  ```~/code/```. Change the linking and include paths as necessary; both the Gnucap and LAPACK headers and  ```.so``` library files are needed.
+```
+g++ -shared -fPIC rc_model.cc ~/code/lapack-3.12.0/liblapack.so ~/code/lapack-3.12.0/libtmglib.so ~/code/lapack-3.12.0/liblapacke.so ~/code/lapack-3.12.0/librefblas.so ~/code/lapack-3.12.0/libcblas.so -o rc.so -I~/code/lapack-3.12.0/LAPACKE/include -I~/code/lapack-3.12.0/CBLAS/include -I/usr/local/include/gnucap -L~/code/lapack-3.12.0 -L/usr/local/lib/ -l lapack -l lapacke -l gfortran -lcblas -l tmglib -l refblas
+```
+The final result is a file, ```rc.so```, which is linked into Gnucap by typing ```load rc.so``` inside a Gnucap runtime. Note that ```rc.so``` shoould ideally be placed somewhere that is searched by the ```LD_LIBRARY_PATH``` environment variable.
 
 ## Licenses & Acknowledgements
-I would like to thank my M.A.I supervisor Dr. Justin King, whose previous work was the basis for this project. He provided invaluable insights and guidance which made the project both possible and an enjoyable experience, instilling curiosity at each discussion.
-
-Relevant academic references are included in the M.A.I dissertation (see Trinity College Dublin Library, <https://www.tcd.ie/library/>).
 
 **Gnucap**
 
