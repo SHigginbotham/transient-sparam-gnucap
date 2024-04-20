@@ -4,6 +4,8 @@ Device plugin for Gnucap which uses vector fitting and recursive convolution to 
 ## Description
 Initially created by Seán Higginbotham as an M.A.I project at Trinity College Dublin in the Department of Electronic and Electrical Engineering, 2023-24. Supervisor: Dr. Justin King.
 
+The corresponding ```Thesis``` is also provided. The information in this is not guaranteed to be correct (especially the material on Gnucap and LAPACK!), and it contains some mistakes and typos. Nevertheless, it can be treated as a documentation for this plugin as it was originally created.
+
 ## File Descriptions
 
 ## Dependancies
